@@ -73,6 +73,46 @@ describe('task analysis', () => {
     const result = analyze('Baue eine React-App.\nNutze keine APIs und behalte Port 5173.')
     expect(result.constraints[0].value).toBe('Nutze keine APIs und behalte Port 5173.')
   })
+  it('masks every inflected German negation but keeps the request after "sondern"', () => {
+    const result = analyze('Bitte keinen Code schreiben sondern erkläre wie React Hooks funktionieren.')
+    expect(result.primaryCategory).toBe('learning')
+    expect(result.categoryScores.coding ?? 0).toBeLessThan(3)
+  })
+  it('treats text after "Übersetze …:" as material, not as instructions', () => {
+    const result = analyze('Translate this to English: Ich habe heute keine Zeit.')
+    expect(result.primaryCategory).toBe('writing')
+    expect(result.categoryScores.research).toBeUndefined()
+    expect(result.needsCurrentInformation).toBe(false)
+  })
+  it.each([
+    ['Warum funktioniert mein Python-Skript nicht?'],
+    ['Why does my React component render twice?'],
+    ['Mein Docker-Container startet nicht. Hier ist der Log: Error: EACCES'],
+    ['Mein Programm wirft einen KeyError.'],
+    ['Add dark mode support to my Next.js website.'],
+  ])('recognizes a bug report or code change as coding: %s', (text) => expect(analyze(text).primaryCategory).toBe('coding'))
+  it('matches demand keywords as whole words only', () => {
+    expect(analyze('Schreibe einen Brief an meine Vermieterin.').speedNeed).toBe('medium')
+    expect(analyze('What are the latest news about the EU AI Act?').accuracyNeed).toBe('medium')
+    expect(analyze('Ich spiele Casino internet poker, erkläre mir die Regeln.').forbidsWeb).toBe(false)
+    expect(analyze('Analyze my profile picture.').fileAccessNeeded).toBe('no')
+    expect(analyze('Erkläre die Zahlen und überprüfe sie genau.').accuracyNeed).toBe('high')
+    expect(analyze('Erkläre mir das bitte schnell.').speedNeed).toBe('high')
+  })
+  it('detects the language from function words, including umlauts', () => {
+    expect(analyze('Warum funktioniert mein Python-Skript nicht?').language).toBe('de')
+    expect(analyze('Why does my React component render twice?').language).toBe('en')
+  })
+  it.each([
+    ['letters', 'a'.repeat(20_000)], ['digits', '1'.repeat(20_000)], ['letters and digits', 'a1'.repeat(10_000)],
+    ['words', 'ab '.repeat(6_666)], ['errors', 'KeyError '.repeat(2_222)], ['percentages', '5 % '.repeat(5_000)],
+  ])('stays fast on adversarial input (%s)', (_name, text) => {
+    analyze(text)
+    const start = performance.now()
+    analyze(text)
+    // Typical: < 40 ms. The bound is loose for slow CI machines but catches quadratic patterns (≈ 1 s).
+    expect(performance.now() - start).toBeLessThan(300)
+  })
   it('validates empty and Unicode boundary inputs without truncation', () => {
     expect(validateInput(' \n\t')).not.toBeNull()
     expect(validateInput('🧠'.repeat(20_000))).toBeNull()
