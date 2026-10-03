@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#244f3c" />
+    <meta name="description" content="Prompts lokal analysieren, verbessern und passende KI-Workflows finden." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23244f3c'/%3E%3Cpath d='m12 5 1.7 4.6L18.5 11.5l-4.8 1.8L12 18l-1.7-4.7-4.8-1.8 4.8-1.9Z' fill='%23fff'/%3E%3C/svg%3E" />
+    <title>PromptRouter</title>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Replaced by React on a successful start. Styles are inline because styles.css may not load. -->
+      <div id="boot" style="max-width: 640px; margin: 15vh auto; padding: 0 16px; font-family: system-ui, sans-serif; color: #20352a; line-height: 1.5">
+        <p id="boot-message">PromptRouter wird geladen …</p>
+      </div>
+    </div>
+    <script>
+      // Plain inline script: runs even when the app bundle itself cannot load.
+      (function () {
+        function showStartupError(title, detail) {
+          var boot = document.getElementById('boot')
+          if (!boot) return // React already rendered; later errors are handled inside the app.
+          boot.innerHTML = '<h1 style="font-size: 1.4rem; color: #a83236"></h1><p></p>' +
+            '<p style="color: #61736a">So startest du die App: im Projektordner <code>npm install</code> und <code>npm run build</code> ausführen und dann <code>dist/index.html</code> per Doppelklick öffnen. ' +
+            'Zum Entwickeln: <code>npm start</code> und <a href="http://localhost:5173/">http://localhost:5173/</a> öffnen.</p>'
+          boot.querySelector('h1').textContent = title
+          boot.querySelector('p').textContent = detail
+        }
+        window.addEventListener('error', function (event) {
+          var target = event.target
+          if (target && target.tagName === 'SCRIPT') {
+            showStartupError('Die App-Dateien konnten nicht geladen werden.', location.protocol === 'file:'
+              ? 'Du hast die Quelldatei index.html direkt geöffnet. Sie braucht den Entwicklungsserver; per Doppelklick funktioniert nur der fertige Build in dist/index.html.'
+              : 'Nicht gefunden oder blockiert: ' + target.src)
+          } else if (event.message) {
+            showStartupError('Die App ist beim Start abgestürzt.', event.message)
+          }
+        }, true)
+        window.addEventListener('unhandledrejection', function (event) {
+          showStartupError('Die App ist beim Start abgestürzt.', String(event.reason && event.reason.message || event.reason))
+        })
+      })()
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
