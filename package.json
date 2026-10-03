@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite",
     "start": "vite --open",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --pretty false",
+    "typecheck": "tsc --noEmit --pretty false",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -31,7 +31,7 @@
           var target = event.target
           if (target && target.tagName === 'SCRIPT') {
             showStartupError('Die App-Dateien konnten nicht geladen werden.', location.protocol === 'file:'
-              ? 'Du hast die Quelldatei index.html direkt geöffnet. Sie braucht den Entwicklungsserver; per Doppelklick funktioniert nur der fertige Build in dist/index.html.'
+              ? 'Du hast die Quelldatei src/index.html direkt geöffnet. Sie braucht den Entwicklungsserver; per Doppelklick funktioniert nur der fertige Build in dist/index.html.'
               : 'Nicht gefunden oder blockiert: ' + target.src)
           } else if (event.message) {
             showStartupError('Die App ist beim Start abgestürzt.', event.message)
@@ -42,6 +42,6 @@
         })
       })()
     </script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="./main.tsx"></script>
   </body>
 </html>

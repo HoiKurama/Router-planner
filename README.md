@@ -10,7 +10,9 @@ Wichtig zur Einordnung:
 
 ## Schnellstart
 
-Voraussetzung: Node.js 24 und npm.
+**Online:** <https://hoikurama.github.io/Router-planner/> – wird bei jedem Push auf `main` von `.github/workflows/static.yml` neu gebaut. In den Repository-Einstellungen muss unter *Pages → Source* „GitHub Actions“ gewählt sein.
+
+**Lokal** (Voraussetzung: Node.js 24 und npm):
 
 ```sh
 npm install
@@ -26,7 +28,7 @@ npm start        # öffnet http://localhost:5173/ im Browser
 npm run dev      # derselbe Server ohne Browserfenster
 ```
 
-Die Quelldatei `index.html` im Projektordner lässt sich **nicht** per Doppelklick öffnen – sie braucht den Entwicklungsserver. Die Seite erklärt das dann selbst, statt weiß zu bleiben.
+Die Quelldatei `src/index.html` lässt sich **nicht** per Doppelklick öffnen – sie braucht den Entwicklungsserver. Die Seite erklärt das dann selbst, statt weiß zu bleiben.
 
 ## Befehle
 
@@ -89,6 +91,7 @@ Prompt → Analyse (Regeln) → Anforderungen → Kandidaten bewerten → Entsch
 
 ```
 src/
+  index.html   Einstiegsseite für Vite (nur über den Build oder den Dev-Server lauffähig)
   analyzer/    Regelanalyse, Anforderungen, Konfigurationsprüfung
   router/      Eignung, Scores, Entscheidung und Begründung
   optimizer/   Gliederung des Prompts mit Erhaltungsprüfung
@@ -107,5 +110,3 @@ Die Fachmodule (`analyzer`, `router`, `optimizer`) sind reine Funktionen ohne Re
 - Regeln erkennen Formulierungen, nicht Bedeutung. Ungewöhnlich formulierte Aufgaben landen im Fallback oder werden falsch eingeordnet; die angezeigten Signale machen das sichtbar.
 - Scores sind heuristische Passung im Demo-Katalog, keine Erfolgswahrscheinlichkeit.
 - Die Optimierung ergänzt höchstens eine Überschrift und zeigt fehlende Angaben als Vorschläge. Sie schreibt den Prompt nicht um.
-
-Die ursprüngliche Spezifikation steht in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md), der Arbeitsstand in [PROJECT_STATE.md](PROJECT_STATE.md).

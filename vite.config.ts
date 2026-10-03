@@ -38,13 +38,20 @@ function inlineBuildAssets(): Plugin {
 }
 
 export default defineConfig({
+  // index.html lives in src/ so the project folder holds no page that only works with the dev server.
+  root: 'src',
   // Relative paths keep any remaining asset references valid outside the server root.
   base: './',
   plugins: [react(), inlineBuildAssets()],
-  build: { cssCodeSplit: false, assetsInlineLimit: Number.MAX_SAFE_INTEGER },
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
+    cssCodeSplit: false,
+    assetsInlineLimit: Number.MAX_SAFE_INTEGER,
+  },
   test: {
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./test/setup.ts'],
     css: false,
   },
 })
