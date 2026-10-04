@@ -10,8 +10,6 @@ export type Language = 'de' | 'en' | 'mixed' | 'unknown'
 export type Demand = 'low' | 'medium' | 'high' | 'unknown'
 export type TriState = 'yes' | 'no' | 'unknown'
 export type SkillRating = 0 | 1 | 2 | 3 | 4
-export type SkillRatings = Record<CapabilityId, SkillRating | null>
-export type ReasoningLevel = 'standard' | 'low' | 'medium' | 'high'
 export type ToolId = 'webSearch' | 'webRead' | 'fileRead' | 'fileWrite' | 'codeExecution'
 export type WorkflowId = 'chat' | 'research' | 'workspace' | 'workspaceResearch'
 
@@ -101,32 +99,91 @@ export interface TaskRequirements {
   confidenceScore: number
   fallback: boolean
   language: Language
+  complexity: 1 | 2 | 3 | 4 | 5 | null
 }
 
-export interface ModelCapabilities {
-  ratings: SkillRatings
-  toolCalling: boolean | null
-  inputModalities: readonly ('text' | 'image' | 'audio')[]
-  contextWindowTokens: number | null
+export type ProviderId = 'anthropic' | 'openai'
+export type MetricId = 'intelligence' | 'coding' | 'math' | 'longContext'
+/** How precisely the provider documents what a setting costs in the plan's usage limit. */
+export type UsageDocumentation = 'ordinal' | 'estimates' | 'none'
+export type Availability = 'yes' | 'unclear'
+/** chat = conversational app, workspace = agent environment with files and code execution. */
+export type PoolKind = 'chat' | 'workspace'
+
+export interface CatalogSource {
+  title: string
+  url: string
+  retrieved: string
 }
 
-export interface ModelVariant {
+export interface MetricInfo {
+  label: string
+  description: string
+  aaField: string
+  source: string
+}
+
+/** One usage allowance, e.g. Claude Pro or ChatGPT Plus Work/Codex. Allowances are not comparable with each other. */
+export interface UsagePool {
   id: string
-  reasoningLevel: ReasoningLevel
-  ratings?: Partial<SkillRatings>
-  speed: SkillRating | null
-  costEfficiency: SkillRating | null
+  plan: string
+  provider: ProviderId
+  kind: PoolKind
+  label: string
+  appUrl: string
+  usageDocumentation: UsageDocumentation
+  usageSummary: string
+  source: string
 }
 
-export interface ModelProfile {
+/** Artificial Analysis values for one model setting; null where AA lists nothing. */
+export interface BenchmarkValues {
+  slug: string
+  intelligence: number | null
+  coding: number | null
+  math: number | null
+  longContext: number | null
+  priceInput: number | null
+  priceOutput: number | null
+  speed: number | null
+  estimated?: boolean
+}
+
+export interface ModelSetting {
+  id: string
+  label: string
+  /** 0 = no reasoning, 1 = lowest effort … 5 = max. Only compared inside one usage pool. */
+  effortRank: number
+  availability: Availability
+  note?: string
+  /** Set when the link between the app setting and the AA variant is an assumption. */
+  mapping?: string
+  aa: BenchmarkValues
+}
+
+export interface ModelFamily {
   id: string
   name: string
-  providerId: string
-  status: 'active' | 'disabled'
-  provenance: 'illustrative' | 'measured' | 'documented'
+  pool: string
+  inPlan: boolean
+  /** Documented usage order inside the pool: 1 = lightest. */
+  weight: number
+  planNote?: string
+  usage: { text: string; estimate: string | null; source: string }
+  contextWindowTokens: number | null
+  contextSource?: string
+  howTo: string
+  settings: ModelSetting[]
+}
+
+export interface ModelCatalog {
   version: string
-  capabilities: ModelCapabilities
-  variants: readonly ModelVariant[]
+  retrieved: string
+  notes: string[]
+  sources: Record<string, CatalogSource>
+  metrics: Record<MetricId, MetricInfo>
+  pools: UsagePool[]
+  models: ModelFamily[]
 }
 
 export interface WorkflowProfile {
@@ -135,62 +192,53 @@ export interface WorkflowProfile {
   tools: readonly ToolId[]
 }
 
-export interface ModelRegistry {
-  version: string
-  models: readonly ModelProfile[]
-  workflows: readonly WorkflowProfile[]
-}
-
-export interface RoutingPreferences {
-  mode: PriorityMode
-  allowedProviderIds?: readonly string[]
-  excludedModelIds?: readonly string[]
-}
-
-export interface RoutingContext {
-  unavailableModelIds?: readonly string[]
-}
-
 export interface WorkflowPlan {
   profile: WorkflowProfile
   tools: ToolId[]
   steps: string[]
 }
 
-export interface ScoreContribution {
-  id: CapabilityId | 'speed' | 'costEfficiency'
-  label: string
-  weight: number
-  rating: SkillRating | null
-  lowerPoints: number
-  upperPoints: number
+export interface RoutingPreferences {
+  mode: PriorityMode
+  /** Pools the user has; undefined means all pools in the catalog. */
+  enabledPools?: readonly string[]
+  preferredProvider?: ProviderId | null
 }
 
-export interface RoutingScore {
-  candidateId: string
-  model: ModelProfile
-  variant: ModelVariant
-  workflow: WorkflowPlan
-  eligibility: 'eligible' | 'conditional' | 'excluded'
-  exclusions: string[]
-  lower: number
-  upper: number
-  qualityLower: number
-  speedLower: number
-  costLower: number
-  contributions: ScoreContribution[]
+export type OptionStatus = 'selected' | 'candidate' | 'dominated' | 'below' | 'excluded'
+
+/** One model setting as seen by the router. */
+export interface RouteOption {
+  id: string
+  family: ModelFamily
+  setting: ModelSetting
+  pool: UsagePool
+  score: number | null
+  /** score divided by the best available score, 0–1+. */
+  share: number | null
+  status: OptionStatus
+  notes: string[]
 }
 
 export interface RoutingDecision {
   sourceRevision: number
   status: 'recommended' | 'provisional' | 'abstained'
   fallback: boolean
-  selected: RoutingScore | null
-  alternatives: RoutingScore[]
-  considered: RoutingScore[]
-  reasons: string[]
+  metric: MetricId | null
+  complexity: 1 | 2 | 3 | 4 | 5 | null
+  /** Required share of the best score, 0–1. */
+  fraction: number | null
+  best: number | null
+  threshold: number | null
+  selected: RouteOption | null
+  alternatives: RouteOption[]
+  considered: RouteOption[]
+  workflow: WorkflowPlan | null
+  /** At most two sentences: why this option and what it saves. */
+  explanation: string
+  details: string[]
   caveats: string[]
-  registryVersion: string
+  catalogVersion: string
   policyVersion: string
 }
 

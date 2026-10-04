@@ -2,9 +2,10 @@ import { analyzePrompt, deriveRequirements } from '../analyzer/analyze'
 import { validateAnalyzerConfig } from '../analyzer/config'
 import { DEFAULT_ANALYZER_CONFIG } from '../data/analysisRules'
 import { optimizePrompt } from '../optimizer/optimize'
+import { buildVariants } from '../optimizer/variants'
 import { routeTask } from '../router/route'
-import { DEMO_REGISTRY } from '../models/catalog'
-import { validateRegistry } from '../models/registry'
+import { CATALOG, CATALOG_ERRORS } from '../models/catalog'
+import { POLICY_VERSION } from '../data/policy'
 import type { OptimizedPrompt, PromptInput, RoutingDecision, RoutingPreferences, TaskAnalysis, TaskRequirements } from '../domain/types'
 
 export interface AnalyzerPort {
@@ -30,19 +31,19 @@ export const localOptimizer: OptimizerPort = {
   async optimize(input, analysis, signal) { signal?.throwIfAborted(); return optimizePrompt(input, analysis) },
 }
 
-const registryErrors = validateRegistry(DEMO_REGISTRY)
 export function recommend(requirements: TaskRequirements, preferences: RoutingPreferences): RoutingDecision {
-  if (registryErrors.length) return {
-    sourceRevision: requirements.sourceRevision, status: 'abstained', fallback: requirements.fallback, selected: null,
-    alternatives: [], considered: [], reasons: ['Der Modellkatalog ist ungültig.'],
-    caveats: registryErrors, registryVersion: DEMO_REGISTRY.version, policyVersion: 'invalid-registry',
+  if (CATALOG_ERRORS.length) return {
+    sourceRevision: requirements.sourceRevision, status: 'abstained', fallback: requirements.fallback, metric: null,
+    complexity: requirements.complexity, fraction: null, best: null, threshold: null, selected: null, alternatives: [],
+    considered: [], workflow: null, explanation: 'models.json ist ungültig, deshalb gibt es keine Empfehlung.', details: [],
+    caveats: CATALOG_ERRORS, catalogVersion: String(CATALOG.version), policyVersion: POLICY_VERSION,
   }
-  return routeTask(requirements, preferences, DEMO_REGISTRY)
+  return routeTask(requirements, preferences, CATALOG)
 }
 
 export async function processPrompt(input: PromptInput, signal?: AbortSignal) {
   const analysis = await localAnalyzer.analyze(input, signal)
   const requirements = deriveRequirements(analysis, DEFAULT_ANALYZER_CONFIG)
   const optimized = await localOptimizer.optimize(input, analysis, signal)
-  return { analysis, requirements, optimized }
+  return { analysis, requirements, optimized, variants: buildVariants(input, analysis, optimized) }
 }

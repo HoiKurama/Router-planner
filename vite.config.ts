@@ -40,6 +40,8 @@ function inlineBuildAssets(): Plugin {
 export default defineConfig({
   // index.html lives in src/ so the project folder holds no page that only works with the dev server.
   root: 'src',
+  // Keep Vite's and Vitest's cache next to the real node_modules instead of creating src/node_modules.
+  cacheDir: '../node_modules/.vite',
   // Relative paths keep any remaining asset references valid outside the server root.
   base: './',
   plugins: [react(), inlineBuildAssets()],

@@ -1,0 +1,131 @@
+{
+  "version": "2026-10-04",
+  "retrieved": "2026-10-04",
+  "notes": [
+    "Benchmarks: Artificial Analysis, manuell übernommen am 2026-10-04. Werte nur für den persönlichen Gebrauch, siehe README (Nutzungsbedingungen von Artificial Analysis).",
+    "Verbrauch: nur, was Anthropic und OpenAI offiziell zu den Abo-Limits schreiben. Was dort fehlt, steht hier als null bzw. als Hinweis."
+  ],
+  "sources": {
+    "aa-leaderboard": { "title": "Artificial Analysis – LLM Leaderboard", "url": "https://artificialanalysis.ai/leaderboards/models", "retrieved": "2026-10-04" },
+    "aa-models": { "title": "Artificial Analysis – Modellseiten (artificialanalysis.ai/models/<slug>)", "url": "https://artificialanalysis.ai/models", "retrieved": "2026-10-04" },
+    "claude-pro": { "title": "Claude Help Center – What is the Pro plan?", "url": "https://support.claude.com/en/articles/8325606-what-is-the-pro-plan", "retrieved": "2026-10-04" },
+    "claude-models": { "title": "Claude Academy – Choosing the right Claude model", "url": "https://academy.claude.com/tutorials/choosing-the-right-claude-model", "retrieved": "2026-10-04" },
+    "claude-effort": { "title": "Claude Help Center – Change the model, effort, and thinking settings", "url": "https://support.claude.com/en/articles/8664678-change-the-model-effort-and-thinking-settings", "retrieved": "2026-10-04" },
+    "claude-fable": { "title": "Claude Help Center – Claude Fable models on your plan", "url": "https://support.claude.com/en/articles/15424964-claude-fable-models-on-your-plan", "retrieved": "2026-10-04" },
+    "claude-context": { "title": "Claude Help Center – How large is the context window on paid Claude plans?", "url": "https://support.claude.com/en/articles/8606394-how-large-is-the-context-window-on-paid-claude-plans", "retrieved": "2026-10-04" },
+    "chatgpt-chat": { "title": "OpenAI Help Center – GPT-5.6 and GPT-6 Pro in ChatGPT", "url": "https://help.openai.com/en/articles/20001354-gpt-56-and-gpt-6-pro-in-chatgpt", "retrieved": "2026-10-04" },
+    "chatgpt-work": { "title": "OpenAI Help Center – Managing usage with GPT-6 Astra in Work and Codex", "url": "https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex", "retrieved": "2026-10-04" },
+    "chatgpt-models": { "title": "ChatGPT Learn – Models", "url": "https://learn.chatgpt.com/docs/models", "retrieved": "2026-10-04" },
+    "chatgpt-plus": { "title": "OpenAI Help Center – What is ChatGPT Plus?", "url": "https://help.openai.com/en/articles/6950777-what-is-chatgpt-plus", "retrieved": "2026-10-04" }
+  },
+  "metrics": {
+    "intelligence": { "label": "AA Intelligence Index", "description": "Artificial Analysis Intelligence Index v4.3.2 (10 Evaluationen), 0–100", "aaField": "intelligenceIndex", "source": "aa-models" },
+    "coding": { "label": "Terminal-Bench 4.0", "description": "Agentisches Coding im Terminal, Anteil gelöster Aufgaben 0–1", "aaField": "terminalBench40", "source": "aa-models" },
+    "math": { "label": "Humanity's Last Exam", "description": "Expertenfragen aus Mathematik und Naturwissenschaften, Anteil richtig 0–1", "aaField": "hle", "source": "aa-models" },
+    "longContext": { "label": "AA-LCR", "description": "Long Context Reasoning v1.1, Dokumente mit 10k–100k Tokens, Anteil richtig 0–1", "aaField": "lcr", "source": "aa-models" }
+  },
+  "pools": [
+    { "id": "claude-pro", "plan": "Claude Pro", "provider": "anthropic", "kind": "chat", "label": "Claude Pro · claude.ai", "appUrl": "https://claude.ai/new", "usageDocumentation": "ordinal", "usageSummary": "5-Stunden-Limit plus Wochenlimit über alle Modelle. Anthropic nennt keine Nachrichtenzahlen, nur die Reihenfolge: Haiku am leichtesten, Sonnet moderat, Opus stark; niedrigere Effort-Stufen verbrauchen weniger.", "source": "claude-pro" },
+    { "id": "chatgpt-plus-chat", "plan": "ChatGPT Plus", "provider": "openai", "kind": "chat", "label": "ChatGPT Plus · Chat", "appUrl": "https://chatgpt.com/", "usageDocumentation": "none", "usageSummary": "Instant und die Thinking-Stufen Medium und High, alle mit GPT-5.6 Sol. Für Medium und High gilt ein Thinking-Limit; Zahlen für Plus veröffentlicht OpenAI nicht.", "source": "chatgpt-chat" },
+    { "id": "chatgpt-plus-work", "plan": "ChatGPT Plus", "provider": "openai", "kind": "workspace", "label": "ChatGPT Plus · Work/Codex", "appUrl": "https://chatgpt.com/", "usageDocumentation": "estimates", "usageSummary": "Eigenes Kontingent für Work und Codex (5 Stunden plus Woche), getrennt vom Chat. OpenAI nennt geschätzte Nachrichten pro 5 Stunden je Modell; höhere Reasoning-Stufen verbrauchen mehr.", "source": "chatgpt-work" }
+  ],
+  "models": [
+    {
+      "id": "claude-haiku-4-5", "name": "Claude Haiku 4.5", "pool": "claude-pro", "inPlan": true, "weight": 1,
+      "usage": { "text": "laut Anthropic die leichteste Nutzung des Limits", "estimate": null, "source": "claude-models" },
+      "contextWindowTokens": 200000, "contextSource": "claude-context",
+      "howTo": "claude.ai → Modellmenü neben „Senden“ → Weitere Modelle → Haiku 4.5 → Schalter „Extended“",
+      "settings": [
+        { "id": "standard", "label": "Extended aus", "effortRank": 0, "availability": "yes", "mapping": "AA-Variante ohne Reasoning; Intelligence Index von AA geschätzt", "aa": { "slug": "claude-4-5-haiku", "intelligence": 15.4, "coding": null, "math": 0.042, "longContext": 0.497, "priceInput": 1, "priceOutput": 5, "speed": 87, "estimated": true } },
+        { "id": "extended", "label": "Extended an", "effortRank": 1, "availability": "yes", "mapping": "Annahme: „Extended an“ zählt wie die niedrigste Effort-Stufe der anderen Claude-Modelle", "aa": { "slug": "claude-4-5-haiku-reasoning", "intelligence": 16.9, "coding": 0, "math": 0.104, "longContext": 0.743, "priceInput": 1, "priceOutput": 5, "speed": 97 } }
+      ]
+    },
+    {
+      "id": "claude-sonnet-5-5", "name": "Claude Sonnet 5.5", "pool": "claude-pro", "inPlan": true, "weight": 2,
+      "usage": { "text": "laut Anthropic „moderate“ Nutzung des Limits", "estimate": null, "source": "claude-models" },
+      "contextWindowTokens": 1000000, "contextSource": "claude-context",
+      "howTo": "claude.ai → Modellmenü neben „Senden“ → Sonnet 5.5 → Effort",
+      "settings": [
+        { "id": "low", "label": "Effort Low", "effortRank": 1, "availability": "yes", "aa": { "slug": "claude-sonnet-5-5-low", "intelligence": 35.9, "coding": 0.207, "math": 0.362, "longContext": 0.76, "priceInput": 2, "priceOutput": 10, "speed": 89 } },
+        { "id": "medium", "label": "Effort Medium", "effortRank": 2, "availability": "yes", "aa": { "slug": "claude-sonnet-5-5-medium", "intelligence": 40.8, "coding": 0.298, "math": 0.398, "longContext": 0.763, "priceInput": 2, "priceOutput": 10, "speed": 90 } },
+        { "id": "high", "label": "Effort High", "effortRank": 3, "availability": "yes", "aa": { "slug": "claude-sonnet-5-5-high", "intelligence": 46.8, "coding": 0.439, "math": 0.458, "longContext": 0.78, "priceInput": 2, "priceOutput": 10, "speed": 93 } },
+        { "id": "xhigh", "label": "Effort Extra high", "effortRank": 4, "availability": "yes", "aa": { "slug": "claude-sonnet-5-5-xhigh", "intelligence": 51.9, "coding": 0.571, "math": 0.5, "longContext": 0.797, "priceInput": 2, "priceOutput": 10, "speed": 97 } },
+        { "id": "max", "label": "Effort Max", "effortRank": 5, "availability": "yes", "aa": { "slug": "claude-sonnet-5-5", "intelligence": 56, "coding": 0.636, "math": 0.55, "longContext": 0.827, "priceInput": 2, "priceOutput": 10, "speed": 132 } }
+      ]
+    },
+    {
+      "id": "claude-opus-5-5", "name": "Claude Opus 5.5", "pool": "claude-pro", "inPlan": true, "weight": 3,
+      "usage": { "text": "laut Anthropic „heavy“: verbraucht das Limit schneller als Sonnet", "estimate": null, "source": "claude-models" },
+      "contextWindowTokens": 1000000, "contextSource": "claude-context",
+      "howTo": "claude.ai → Modellmenü neben „Senden“ → Opus 5.5 → Effort",
+      "settings": [
+        { "id": "low", "label": "Effort Low", "effortRank": 1, "availability": "yes", "aa": { "slug": "claude-opus-5-5-low", "intelligence": 42.3, "coding": 0.313, "math": 0.483, "longContext": 0.807, "priceInput": 4, "priceOutput": 20, "speed": 70 } },
+        { "id": "medium", "label": "Effort Medium", "effortRank": 2, "availability": "yes", "aa": { "slug": "claude-opus-5-5-medium", "intelligence": 51.2, "coding": 0.525, "math": 0.547, "longContext": 0.843, "priceInput": 4, "priceOutput": 20, "speed": 72 } },
+        { "id": "high", "label": "Effort High", "effortRank": 3, "availability": "yes", "aa": { "slug": "claude-opus-5-5-high", "intelligence": 53.6, "coding": 0.566, "math": 0.556, "longContext": 0.827, "priceInput": 4, "priceOutput": 20, "speed": 72 } },
+        { "id": "xhigh", "label": "Effort Extra high", "effortRank": 4, "availability": "yes", "aa": { "slug": "claude-opus-5-5-xhigh", "intelligence": 56, "coding": 0.596, "math": 0.575, "longContext": 0.847, "priceInput": 4, "priceOutput": 20, "speed": 76 } },
+        { "id": "max", "label": "Effort Max", "effortRank": 5, "availability": "yes", "aa": { "slug": "claude-opus-5-5", "intelligence": 57.6, "coding": 0.596, "math": 0.614, "longContext": 0.847, "priceInput": 4, "priceOutput": 20, "speed": 92 } }
+      ]
+    },
+    {
+      "id": "claude-fable-5-1", "name": "Claude Fable 5.1", "pool": "claude-pro", "inPlan": false, "weight": 4,
+      "planNote": "Nicht im Pro-Kontingent: läuft auf Pro nur über bezahltes Nutzungsguthaben.",
+      "usage": { "text": "laut Anthropic die stärkste Nutzung; auf Pro nicht im Limit enthalten", "estimate": null, "source": "claude-fable" },
+      "contextWindowTokens": 1000000, "contextSource": "claude-context",
+      "howTo": "claude.ai → Modellmenü → Fable 5.1 (nur mit Nutzungsguthaben)",
+      "settings": [
+        { "id": "high", "label": "Effort High", "effortRank": 3, "availability": "yes", "aa": { "slug": "claude-fable-5-1-high", "intelligence": 51.2, "coding": 0.52, "math": 0.559, "longContext": 0.837, "priceInput": 10, "priceOutput": 50, "speed": 51 } }
+      ]
+    },
+    {
+      "id": "gpt-5-6-sol-chat", "name": "GPT-5.6 Sol", "pool": "chatgpt-plus-chat", "inPlan": true, "weight": 1,
+      "usage": { "text": "Medium und High zählen auf ein GPT-5.6-Thinking-Limit. Wie hoch es ist und ob Instant auf Plus begrenzt ist, nennt OpenAI nicht", "estimate": null, "source": "chatgpt-chat" },
+      "contextWindowTokens": null,
+      "howTo": "chatgpt.com → Thinking-Regler: Instant, Medium oder High",
+      "settings": [
+        { "id": "instant", "label": "Instant", "effortRank": 0, "availability": "yes", "mapping": "Annahme: Instant entspricht der AA-Variante ohne Reasoning; Intelligence Index von AA geschätzt", "aa": { "slug": "gpt-5-6-sol-non-reasoning", "intelligence": 28.3, "coding": null, "math": 0.167, "longContext": 0.623, "priceInput": 4, "priceOutput": 20, "speed": 69, "estimated": true } },
+        { "id": "medium", "label": "Thinking Medium", "effortRank": 2, "availability": "yes", "mapping": "Annahme: OpenAI nennt „Standard thinking“; die Zuordnung zur API-Stufe medium ist nicht dokumentiert", "aa": { "slug": "gpt-5-6-sol-medium", "intelligence": 39.2, "coding": 0.146, "math": 0.422, "longContext": 0.803, "priceInput": 4, "priceOutput": 20, "speed": 70 } },
+        { "id": "high", "label": "Thinking High", "effortRank": 3, "availability": "yes", "mapping": "Annahme: OpenAI nennt „Extended thinking“; die Zuordnung zur API-Stufe high ist nicht dokumentiert", "aa": { "slug": "gpt-5-6-sol-high", "intelligence": 42.3, "coding": 0.207, "math": 0.46, "longContext": 0.817, "priceInput": 4, "priceOutput": 20, "speed": 72 } }
+      ]
+    },
+    {
+      "id": "gpt-6-luna", "name": "GPT-6 Luna", "pool": "chatgpt-plus-work", "inPlan": true, "weight": 1,
+      "usage": { "text": "laut OpenAI das effizienteste Modell, gedacht für klar umrissene Aufgaben in großer Zahl", "estimate": "350–3.000 Nachrichten pro 5 Stunden", "source": "chatgpt-work" },
+      "contextWindowTokens": null,
+      "howTo": "ChatGPT Work oder Codex → Modell- und Reasoning-Regler unter dem Eingabefeld → Advanced → Luna",
+      "settings": [
+        { "id": "low", "label": "Reasoning Light", "effortRank": 1, "availability": "yes", "aa": { "slug": "gpt-6-luna-low", "intelligence": 21.5, "coding": 0, "math": 0.203, "longContext": 0.74, "priceInput": 0.1, "priceOutput": 0.5, "speed": 120 } },
+        { "id": "medium", "label": "Reasoning Medium", "effortRank": 2, "availability": "yes", "aa": { "slug": "gpt-6-luna-medium", "intelligence": 29.9, "coding": 0.025, "math": 0.283, "longContext": 0.783, "priceInput": 0.1, "priceOutput": 0.5, "speed": null } },
+        { "id": "high", "label": "Reasoning High", "effortRank": 3, "availability": "yes", "aa": { "slug": "gpt-6-luna-high", "intelligence": 32.9, "coding": 0.045, "math": 0.329, "longContext": 0.793, "priceInput": 0.1, "priceOutput": 0.5, "speed": 133 } },
+        { "id": "xhigh", "label": "Reasoning Extra High", "effortRank": 4, "availability": "yes", "aa": { "slug": "gpt-6-luna-xhigh", "intelligence": 34.6, "coding": 0.081, "math": 0.343, "longContext": 0.8, "priceInput": 0.1, "priceOutput": 0.5, "speed": 134 } },
+        { "id": "max", "label": "Reasoning Max", "effortRank": 5, "availability": "yes", "note": "Max muss eventuell in den App-Einstellungen eingeschaltet werden.", "aa": { "slug": "gpt-6-luna", "intelligence": 38.1, "coding": 0.126, "math": 0.385, "longContext": 0.833, "priceInput": 0.1, "priceOutput": 0.5, "speed": 127 } }
+      ]
+    },
+    {
+      "id": "gpt-6-1-sol", "name": "GPT-6.1 Sol", "pool": "chatgpt-plus-work", "inPlan": true, "weight": 2,
+      "planNote": "Wird für Plus noch ausgerollt; fehlt es im Modellmenü, ist es für dein Konto noch nicht freigeschaltet.",
+      "usage": { "text": "laut OpenAI fast Astra-Leistung bei geringerem Verbrauch als Astra", "estimate": "15–160 Nachrichten pro 5 Stunden", "source": "chatgpt-work" },
+      "contextWindowTokens": null,
+      "howTo": "ChatGPT Work oder Codex → Modell- und Reasoning-Regler unter dem Eingabefeld → Advanced → GPT-6.1 Sol",
+      "settings": [
+        { "id": "low", "label": "Reasoning Light", "effortRank": 1, "availability": "yes", "aa": { "slug": "gpt-6-1-sol-low", "intelligence": 42.1, "coding": 0.308, "math": 0.474, "longContext": 0.84, "priceInput": 2, "priceOutput": 10, "speed": 47 } },
+        { "id": "medium", "label": "Reasoning Medium", "effortRank": 2, "availability": "yes", "aa": { "slug": "gpt-6-1-sol-medium", "intelligence": 47.8, "coding": 0.48, "math": 0.499, "longContext": 0.833, "priceInput": 2, "priceOutput": 10, "speed": 45 } },
+        { "id": "high", "label": "Reasoning High", "effortRank": 3, "availability": "yes", "aa": { "slug": "gpt-6-1-sol-high", "intelligence": 50.2, "coding": 0.515, "math": 0.514, "longContext": 0.823, "priceInput": 2, "priceOutput": 10, "speed": 47 } },
+        { "id": "xhigh", "label": "Reasoning Extra High", "effortRank": 4, "availability": "yes", "aa": { "slug": "gpt-6-1-sol-xhigh", "intelligence": 51, "coding": 0.54, "math": 0.526, "longContext": 0.797, "priceInput": 2, "priceOutput": 10, "speed": 50 } },
+        { "id": "max", "label": "Reasoning Max", "effortRank": 5, "availability": "yes", "note": "Max muss eventuell in den App-Einstellungen eingeschaltet werden.", "aa": { "slug": "gpt-6-1-sol", "intelligence": 51.8, "coding": 0.561, "math": 0.529, "longContext": 0.83, "priceInput": 2, "priceOutput": 10, "speed": 51 } }
+      ]
+    },
+    {
+      "id": "gpt-6-astra", "name": "GPT-6 Astra", "pool": "chatgpt-plus-work", "inPlan": true, "weight": 3,
+      "usage": { "text": "laut OpenAI das leistungsfähigste Modell in Work und Codex; die Schätzung ist die niedrigste", "estimate": "5–45 Nachrichten pro 5 Stunden", "source": "chatgpt-work" },
+      "contextWindowTokens": null,
+      "howTo": "ChatGPT Work oder Codex → Modell- und Reasoning-Regler unter dem Eingabefeld → Advanced → Astra",
+      "settings": [
+        { "id": "low", "label": "Reasoning Light", "effortRank": 1, "availability": "yes", "aa": { "slug": "gpt-6-astra-low", "intelligence": 45.8, "coding": 0.419, "math": 0.492, "longContext": 0.8, "priceInput": 10, "priceOutput": 50, "speed": 48 } },
+        { "id": "medium", "label": "Reasoning Medium", "effortRank": 2, "availability": "yes", "aa": { "slug": "gpt-6-astra-medium", "intelligence": 49.6, "coding": 0.495, "math": 0.527, "longContext": 0.797, "priceInput": 10, "priceOutput": 50, "speed": 48 } },
+        { "id": "high", "label": "Reasoning High", "effortRank": 3, "availability": "yes", "aa": { "slug": "gpt-6-astra-high", "intelligence": 50.9, "coding": 0.54, "math": 0.531, "longContext": 0.8, "priceInput": 10, "priceOutput": 50, "speed": 50 } },
+        { "id": "xhigh", "label": "Reasoning Extra High", "effortRank": 4, "availability": "unclear", "note": "OpenAI schreibt, dass manche bezahlten Pläne Astra Extra High nicht haben, nennt aber nicht welche.", "aa": { "slug": "gpt-6-astra-xhigh", "intelligence": 52.4, "coding": 0.596, "math": 0.546, "longContext": 0.8, "priceInput": 10, "priceOutput": 50, "speed": 53 } },
+        { "id": "max", "label": "Reasoning Max", "effortRank": 5, "availability": "unclear", "note": "Ob Max für Astra auf Plus freigeschaltet ist, ist nicht dokumentiert.", "aa": { "slug": "gpt-6-astra", "intelligence": 52.7, "coding": 0.591, "math": 0.547, "longContext": 0.807, "priceInput": 10, "priceOutput": 50, "speed": 56 } }
+      ]
+    }
+  ]
+}

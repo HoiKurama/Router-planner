@@ -6,8 +6,8 @@ const demandLabel: Record<Demand, string> = { low: 'Niedrig', medium: 'Mittel', 
 const boolLabel = { yes: 'Ja', no: 'Nein', unknown: 'Unklar' }
 
 export function AnalysisPanel({ analysis, stale, edited }: { analysis: TaskAnalysis | null; stale: boolean; edited: boolean }) {
-  return <section className="panel analysis-panel" aria-labelledby="analysis-title">
-    <div className="panel-heading"><div><span className="step-number">02</span><h2 id="analysis-title">Analyse</h2></div><span className="tiny-label">AUFGABENPROFIL</span></div>
+  return <section className="card analysis-panel" aria-labelledby="analysis-title">
+    <div className="card-heading"><div><span className="step-number">04</span><h2 id="analysis-title">Analyse</h2></div><span className="tiny-label">AUFGABENPROFIL</span></div>
     {!analysis || stale ? <div className="empty-panel">
       <div className="empty-icon"><Icon name="scan" size={26} /></div>
       <h3>{stale ? 'Änderungen neu bewerten' : 'Was braucht deine Aufgabe?'}</h3>

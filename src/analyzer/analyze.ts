@@ -211,5 +211,6 @@ export function deriveRequirements(analysis: TaskAnalysis, config: AnalyzerConfi
     contextDemand: analysis.contextDemand, minContextTokens: null,
     validationSteps, issues: analysis.issues, analysisConfidence: analysis.confidence,
     confidenceScore: analysis.confidenceScore, fallback: analysis.fallback, language: analysis.language,
+    complexity: analysis.complexity.value,
   }
 }

@@ -1,7 +1,15 @@
 import { MAX_PROMPT_CODEPOINTS } from '../data/policy'
 import type { OptimizedPrompt, PromptInput, TaskAnalysis } from '../domain/types'
 
-function render(text: string, insertions: OptimizedPrompt['insertions']): string {
+/** Prompts shorter than this stay as they are: a heading would add more than it helps. */
+export const MIN_STRUCTURE_LENGTH = 25
+
+/** The prompt already has headings or labelled sections, so it needs no extra heading. */
+export function isStructured(text: string): boolean {
+  return /(?:^|\n)\s*(?:#{1,6}\s|(?:ziel|aufgabe|kontext|anforderungen|ausgabe|task|goal|context|requirements|output):)/iu.test(text)
+}
+
+export function render(text: string, insertions: OptimizedPrompt['insertions']): string {
   let cursor = 0
   let result = ''
   for (const insertion of [...insertions].sort((a, b) => a.offset - b.offset)) {
@@ -40,8 +48,7 @@ export function optimizePrompt(input: PromptInput, analysis: TaskAnalysis): Opti
   if (analysis.primaryCategory === 'learning' && !/anfänger|beginner|vorwissen|knowledge|eli5/iu.test(input.text)) {
     suggestions.push(english ? 'State your prior knowledge so the explanation can match your level.' : 'Nenne dein Vorwissen, damit die Erklärung dazu passt.')
   }
-  const structured = /(?:^|\n)\s*(?:#{1,6}\s|(?:ziel|aufgabe|kontext|anforderungen|ausgabe|task|goal|context|requirements|output):)/iu.test(input.text)
-  const shouldStructure = !structured && input.text.length >= 25 && analysis.primaryCategory !== null
+  const shouldStructure = !isStructured(input.text) && input.text.length >= MIN_STRUCTURE_LENGTH && analysis.primaryCategory !== null
     && (analysis.language === 'de' || analysis.language === 'en')
   let insertions: OptimizedPrompt['insertions'] = shouldStructure
     ? [{ offset: 0, text: english ? '# Task\n\n' : '# Aufgabe\n\n', reason: 'Die Aufgabe erhält eine klare Abschnittsüberschrift.' }] : []

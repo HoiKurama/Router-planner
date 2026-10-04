@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { analyzePrompt, deriveRequirements } from '../analyzer/analyze'
 import { validateAnalyzerConfig } from '../analyzer/config'
 import { DEFAULT_ANALYZER_CONFIG, type AnalyzerConfig } from '../data/analysisRules'
-import { DEMO_REGISTRY } from '../models/catalog'
+import { CATALOG } from '../models/catalog'
 import type { PriorityMode } from '../domain/types'
 import { routeTask } from './route'
 
 const analyze = (text: string, config: AnalyzerConfig = DEFAULT_ANALYZER_CONFIG) => analyzePrompt({ text, revision: 1 }, config)
 const route = (text: string, mode: PriorityMode = 'balanced', config: AnalyzerConfig = DEFAULT_ANALYZER_CONFIG) =>
-  routeTask(deriveRequirements(analyze(text, config), config), { mode }, DEMO_REGISTRY)
+  routeTask(deriveRequirements(analyze(text, config), config), { mode }, CATALOG)
 
 describe('configurable rule set', () => {
   it('accepts the shipped configuration', () => expect(validateAnalyzerConfig(DEFAULT_ANALYZER_CONFIG)).toEqual([]))
@@ -55,9 +55,9 @@ describe('fallback route', () => {
     const decision = route('What is the capital of France?')
     expect(decision.fallback).toBe(true)
     expect(decision.status).toBe('provisional')
-    expect(decision.selected?.eligibility).toBe('eligible')
-    expect(decision.reasons[0]).toMatch(/^Fallback-Route/)
-    expect(decision.selected?.contributions.map((c) => c.id)).toEqual(expect.arrayContaining(['reasoning', 'writing']))
+    expect(decision.selected).not.toBeNull()
+    expect(decision.details[0]).toMatch(/^Fallback: Keine Aufgabenregel greift/)
+    expect(decision.metric).toBe('intelligence')
   })
 
   it('still abstains when there is nothing to route', () => {
@@ -79,8 +79,10 @@ describe('fallback route', () => {
   })
 
   it('follows the priority mode like any other route', () => {
-    const picks = (['fast', 'balanced', 'best'] as const).map((mode) => route('hi', mode).selected?.model.id)
-    expect(picks).toEqual(['demo-speed', 'demo-balanced', 'demo-reasoning'])
+    const [fast, balanced, best] = (['fast', 'balanced', 'best'] as const).map((mode) => route('hi', mode))
+    expect(fast.threshold!).toBeLessThan(balanced.threshold!)
+    expect(best.selected!.score!).toBeGreaterThan(balanced.selected!.score!)
+    expect(best.selected!.score).toBe(best.best)
   })
 })
 
@@ -100,7 +102,7 @@ describe('confidence score', () => {
   it('is zero when nothing was recognized', () => expect(analyze('Hallo zusammen').confidenceScore).toBe(0))
 
   it('is stated in the first reason of a routed decision', () => {
-    expect(route('Analysiere meine CSV-Datei mit Umsätzen.').reasons[0]).toMatch(/^Erkannt als Datenanalyse mit \d+ % Regel-Sicherheit\.$/)
+    expect(route('Analysiere meine CSV-Datei mit Umsätzen.').details[0]).toMatch(/^Erkannt als Datenanalyse mit \d+ % Regel-Sicherheit, Komplexität \d\/5\.$/)
   })
 })
 

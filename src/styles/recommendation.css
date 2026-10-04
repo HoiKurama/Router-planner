@@ -1,0 +1,78 @@
+.recommendation-placeholder { display: flex; flex-direction: row; align-items: center; gap: 18px; border-style: dashed; box-shadow: none; padding: 24px; background: transparent; }
+.route-symbol { color: var(--accent); width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 13px; display: grid; place-items: center; flex-shrink: 0; }
+.recommendation-placeholder h2 { font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+.recommendation-placeholder p { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.7; }
+.recommendation-placeholder > .tiny-label { margin-left: auto; }
+
+.recommendation-card { padding: 24px; }
+.recommendation-card.provider-anthropic { box-shadow: inset 0 3px 0 var(--claude), var(--shadow); }
+.recommendation-card.provider-openai { box-shadow: inset 0 3px 0 var(--openai), var(--shadow); }
+.recommendation-card.is-loading { gap: 14px; }
+.skeleton-block { height: 14px; width: 70%; border-radius: 6px; background: linear-gradient(90deg, var(--line), var(--panel-soft), var(--line)); background-size: 200% 100%; animation: shimmer 1.2s ease-in-out infinite; }
+.skeleton-block.wide { height: 26px; width: 45%; }
+.skeleton-block.short { width: 35%; }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+.recommendation-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.recommendation-top .eyebrow { font-size: 11px; display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.provider-chip { font-size: 10px; letter-spacing: .6px; padding: 2px 8px; border-radius: 10px; color: var(--chip-text); }
+.provider-chip.anthropic { background: var(--claude); }
+.provider-chip.openai { background: var(--openai); }
+.recommendation-top h2 { font-size: 26px; letter-spacing: -.6px; margin: 10px 0 4px; font-weight: 620; }
+.setting-label { font-size: 17px; font-weight: 600; margin: 0; color: var(--accent); }
+.setting-label span { font-size: 12px; font-weight: 400; color: var(--muted); }
+.model-source { font-size: 12px; color: var(--muted); margin: 0; }
+.recommendation-score { text-align: right; flex-shrink: 0; }
+.recommendation-score > strong { display: block; color: var(--accent); font-size: 30px; font-weight: 560; letter-spacing: -1px; }
+.recommendation-score > span { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; max-width: 210px; }
+.recommendation-status { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0 12px; }
+.status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; border-radius: 5px; color: var(--accent); background: var(--accent-soft); padding: 5px 8px; }
+.status-pill.warning { color: var(--warning); background: var(--warning-bg); }
+.mode-note { font-size: 11px; color: var(--muted); }
+.explanation { font-size: 14px; line-height: 1.75; margin: 0 0 18px; max-width: 80ch; }
+
+.route-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; border-top: 1px solid var(--line); padding-top: 16px; }
+.route-meta > div > span { display: block; font-size: 10px; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.route-meta strong { display: block; font-size: 12px; font-weight: 500; line-height: 1.65; }
+.route-meta small { display: block; font-size: 11px; color: var(--muted); margin-top: 6px; }
+.text-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; }
+.text-link:hover { text-decoration: underline; }
+
+.caveat-box { display: flex; gap: 9px; padding: 12px 14px; background: var(--warning-bg); color: var(--warning); border-radius: 8px; font-size: 12px; line-height: 1.7; margin: 16px 0; }
+.caveat-box > svg { margin-top: 2px; }
+.caveat-box p { margin: 0; }
+.caveat-box p + p { margin-top: 5px; }
+
+.alternatives { margin: 18px 0 0; }
+.alternatives ul { list-style: none; padding: 0; margin: 9px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.alternative { border: 1px solid var(--line); border-radius: 9px; padding: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; font-size: 12px; }
+.alternative > span { display: flex; flex-wrap: wrap; align-items: center; gap: 0 7px; }
+.alternative small { flex-basis: 100%; color: var(--muted); font-size: 11px; margin-top: 4px; }
+.alternative > strong { color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+.workflow-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 18px 0 0; }
+.workflow-steps > span { display: flex; align-items: center; gap: 5px; color: var(--muted); }
+.workflow-step { background: var(--panel-soft); border: 1px solid var(--line); padding: 5px 9px; border-radius: 5px; font-size: 11px; }
+
+.routing-details { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 14px; }
+.routing-details > summary { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.routing-details h3 { font-size: 12px; margin-top: 22px; }
+.reason-list { font-size: 12px; color: var(--muted); line-height: 1.8; padding-left: 16px; margin: 16px 0; }
+.reason-list li + li { margin-top: 3px; }
+.table-scroll { overflow-x: auto; }
+.table-level { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+tr.is-selected td { background: var(--accent-soft); }
+.source-list { font-size: 11px; line-height: 1.8; padding-left: 16px; color: var(--muted); margin: 8px 0 0; }
+.source-list a { color: var(--accent); }
+
+@media (max-width: 640px) {
+  .recommendation-card, .recommendation-placeholder { padding: 18px 16px; }
+  .recommendation-placeholder > .tiny-label { display: none; }
+  .recommendation-top { flex-direction: column; gap: 10px; }
+  .recommendation-top h2 { font-size: 23px; }
+  .recommendation-score { text-align: left; }
+  .recommendation-score > strong { font-size: 26px; }
+  .explanation { font-size: 13px; }
+  .route-meta { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  th, td { padding: 8px; }
+}
