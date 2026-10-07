@@ -137,7 +137,7 @@ Alles bleibt in deinem Browser (`localStorage`), nichts geht ins Netz.
 | `npm run preview` | Den Build über einen lokalen Server ansehen |
 | `npm test` | Alle Tests (Vitest) |
 | `npm run test:watch` | Tests im Watch-Modus |
-| `npm run evaluate` | Nur die handgeprüften Routing-Fälle |
+| `npm run evaluate` | Handgeprüfte Routing-Fälle sowie Tuning- und Held-out-Set mit Trefferquote |
 | `npm run typecheck` / `npm run lint` | TypeScript und ESLint |
 
 ## Projektaufbau
@@ -191,4 +191,6 @@ Stand aller Angaben: 4. Oktober 2026.
 - **Benchmarks sind Stellvertreter.** Terminal-Bench misst agentisches Coding im Terminal, HLE Expertenfragen. Für eine einfache Rechenaufgabe ist HLE sehr streng; deshalb liegt der Anteil bei Komplexität 1 niedrig.
 - **Zuordnungen sind teils Annahmen.** Die Chat-Stufen von GPT-5.6 Sol und „Extended an/aus“ bei Haiku 4.5 haben keine dokumentierte Entsprechung bei Artificial Analysis. Solche Empfehlungen sind als vorläufig markiert.
 - **Regeln erkennen Formulierungen, nicht Bedeutung.** Ungewöhnlich formulierte Aufgaben landen im Fallback oder in der falschen Kategorie; die Analyse zeigt, welche Regeln gegriffen haben.
+  Gemessen wird das in `src/evaluation/heldout.ts`: Am **Tuning-Set** (53 Alltagsprompts) wurden die Regeln entwickelt, es muss vollständig korrekt bleiben. Das **Held-out-Set** (50 Prompts, erst danach geschrieben) zeigt die ehrliche Quote: 50 % richtig (vorher 38 %), 2 in einer falschen Kategorie, der Rest im Fallback. Wer eine Regel wegen eines Held-out-Prompts ändert, verschiebt ihn ins Tuning-Set und schreibt einen neuen.
+  Muster in `src/data/analysisRules.ts` mit `rx()` schreiben: Es macht `\b` Unicode-fähig (das eingebaute `\b` kennt keine Umlaute) und verhindert Treffer in fremden Wörtern („test“ in „latest“). Ein Test prüft, dass keine Regel auf 20.000 Zeichen quadratisch langsam wird.
 - **Die Varianten** fügen nur einen Rahmen hinzu (XML-Tags bzw. Überschriften und wenige Ausgabehinweise). Dein Text bleibt Zeichen für Zeichen erhalten; das prüft die App bei jeder Variante.

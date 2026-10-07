@@ -1,9 +1,10 @@
-import { DEFAULT_ANALYZER_CONFIG, type AnalyzerConfig } from '../data/analysisRules'
+import { DEFAULT_ANALYZER_CONFIG, FRESH, type AnalyzerConfig } from '../data/analysisRules'
 import { CATEGORY_WEIGHTS, COMPLEXITY_MINIMUM, MAX_PROMPT_CODEPOINTS } from '../data/policy'
 import type {
   CapabilityId, CapabilityNeed, Category, Demand, Evidence, Finding,
   Language, PromptInput, Signal, SkillRating, TaskAnalysis, TaskRequirements, ToolId,
 } from '../domain/types'
+import { rx } from '../domain/text'
 
 export function validateInput(text: string): string | null {
   if (!text.trim()) return 'Bitte gib zuerst einen Prompt ein.'
@@ -13,9 +14,13 @@ export function validateInput(text: string): string | null {
   return null
 }
 
+// Function words that exist in only one of the two languages ("was", "will", "die", "an" are in both).
+const GERMAN_WORDS = rx(String.raw`\b(?:der|das|und|eine?[nmrs]?|mit|für|bitte|ich|ist|sind|nicht|wie|warum|mein\w*|zu|den|dem|von|auf|wird|kann|soll|schreib\w*|baue|beweise|erkläre|berechne|analysiere|recherchiere|verbessere|hilf)\b`, 'giu')
+const ENGLISH_WORDS = rx(String.raw`\b(?:the|and|a|with|for|please|i|is|are|not|how|why|what|my|to|of|this|that|it|can|should|write|build|prove|explain|calculate|analyze|research|improve|help)\b`, 'giu')
+
 function detectLanguage(text: string): Language {
-  const de = (text.match(/\b(der|die|das|und|eine?|mit|für|bitte|schreibe|baue|beweise|erkläre|berechne|analysiere|recherchiere|verbessere)\b/giu) ?? []).length
-  const en = (text.match(/\b(the|and|an?|with|for|please|write|build|prove|explain|calculate|analyze|research|improve)\b/giu) ?? []).length
+  const de = (text.match(GERMAN_WORDS) ?? []).length
+  const en = (text.match(ENGLISH_WORDS) ?? []).length
   if (!de && !en) return 'unknown'
   if (de && en && Math.min(de, en) / Math.max(de, en) >= 0.6) return 'mixed'
   return de > en ? 'de' : 'en'
@@ -24,17 +29,46 @@ function detectLanguage(text: string): Language {
 /** Masking preserves UTF-16 offsets so every evidence range points to the original. */
 const blank = (value: string) => value.replace(/[^\r\n]/g, ' ')
 
-/** Quoted text and code blocks are material to work on, not instructions. */
+/** "Übersetze das: …", "Improve this text: …": everything after the colon is the text to work on. */
+const MATERIAL = rx(String.raw`(\b(?:übersetze|translate|verbessere|improve|korrigiere|correct|fasse|summari[sz]e|rewrite|überarbeite|proofread|paraphrase|kürze|shorten|lektoriere|redigiere)\b[^:\n]{0,80}:)([\s\S]*)`)
+
+/** Quoted text, code blocks and pasted material are things to work on, not instructions. */
 function contextView(text: string): string {
   return text
     .replace(/```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)/g, blank)
     .replace(/"[^"\n]*"|„[^“\n]*“/g, blank)
+    .replace(MATERIAL, (_match, lead: string, material: string) => lead + blank(material))
 }
 
-/** Additionally hides negated clauses ("do not write code"), which must not drive the category. */
+/**
+ * Additionally hides negated clauses ("do not write code", "keinen Code"), which must not drive the
+ * category. A clause ends at punctuation or at a contrast word: in "keinen Code, sondern erkläre …"
+ * the request after "sondern" still counts.
+ */
+const NEGATED_CLAUSE = rx(String.raw`\b(?:do not|don't|dont|kein(?:e[nmrs]?)?|nicht)\b[^.!?\n,;]*?(?=$|[.!?\n,;]|\s(?:sondern|aber|jedoch|stattdessen|but|instead|however)\b)`, 'giu')
 function instructionView(context: string): string {
-  return context.replace(/(?:\bdo not\b|\bdon't\b|\bkeine?\b|\bnicht\b)[^.!?\n,;]*/giu, blank)
+  return context.replace(NEGATED_CLAUSE, blank)
 }
+
+// Whole-word patterns: "latest" must not count as "test", the German "Brief" (letter) not as "brief".
+const MULTI_STEP = rx(String.raw`\bzuerst\b[^.!?]{0,250}\b(?:dann|anschließend|danach)\b|\bfirst\b[^.!?]{0,250}\b(?:then|next)\b|mehrstufig|multi.step|\bmigration\b[^.!?]{0,180}(?:\btests?\b|rollback|kompatib)|\bmigriere\b[^.!?]{0,180}(?:\btests?\b|kompatib)`)
+const EXPLICIT_MIX = rx(String.raw`\b(?:und|and)\b[^.!?\n]{0,20}\b(?:schreibe|write|analysiere|analyze|recherchiere|research|implementiere|implement)\b`)
+const ARITHMETIC = rx(String.raw`^\s*(?:berechne|calculate|was ist|what is)?\s*\d+(?:[.,]\d+)?\s*[+*/−-]\s*\d+(?:[.,]\d+)?\s*[?.]?\s*$`)
+const DIFFICULTY_RULES = [
+  { level: 3 as const, pattern: rx(String.raw`\bprojekt\w*|\bprojects?\b|mehrstufig|multi.step|\bintegration\w*|\bmehrere[nmrs]?\b|\bmultiple\b`) },
+  { level: 4 as const, pattern: rx(String.raw`\bbeweise|\bprove|\bmigration|\bmigriere|\bmigrate|architektur|architecture|nebenläufig|concurren|kompatib|compatib`) },
+  { level: 5 as const, pattern: rx(String.raw`(?:verteilte|distributed)[^.!?\n]{0,35}(?:system|architektur)|(?:gesamte|entire|large)[^.!?\n]{0,25}(?:codebase|monorepo|repository)|formal[^.!?\n]{0,30}(?:verifiz|verif)`) },
+]
+const CURRENT_INFORMATION = rx(String.raw`\b(?:${FRESH})\b`)
+const FORBIDS_WEB = rx(String.raw`\b(?:ohne|kein(?:e[nmrs]?)?|nicht|without|no|do not|don't)\s+(?:eine?n?\s+|use\s+|using\s+|the\s+)?(?:web(?:suche|zugriff)?|online-?recherche|recherche|browsing|internet|research)\b|\brecherchiere\s+nicht\b`)
+const FILE_ACCESS = rx(String.raw`\b(?:analysiere|analyze|analyse|inspect|öffne|open|lies|read)\b[^.!?\n]{0,65}(?:\w*datei\w*|\bfiles?\b|\bcsv\b|\bxlsx\b|\bpdf\b|repository|codebase)|\b(?:meine|diese|angehängte|attached|this|my)\s+(?:\w*datei\b|files?\b|csv\b|xlsx\b|repository)|\b(?:migriere|migrate|refactor)\b[^.!?\n]{0,60}(?:repository|projekt|project|codebase)`)
+const WORKSPACE = rx(String.raw`\bprojekt\w*|\bprojects?\b|repository|codebase|\bmigration|\bmigriere|\bmigrate`)
+const ACCURACY = rx(String.raw`\b(?:exakt\w*|genau(?:e[nmrs]?)?|fehlerfrei\w*|korrekt\w*|präzise?\w*|prüfe|überprüfe|verifiziere|exact\w*|accurate\w*|precise\w*|verify|correct(?:ly|ness)?|tests?|quellen|sources)\b`)
+const URGENCY = rx(String.raw`\b(?:schnell\w*|sofort|eilig\w*|dringend\w*|asap|quick(?:ly)?|urgent(?:ly)?|right away|as soon as possible)\b`)
+const EXECUTION_CONSTRAINT = rx(String.raw`(?:ki.modell|ai model|model execution)[^.!?\n]{0,65}(?:budget|maximal|\bmax\b|kosten|cost)|\b(?:nutze|verwende|use)\s+(?:ausschließlich|nur|only|exclusively)\s+(?:das\s+modell\s+)?(?:gpt|claude|gemini|llama)`)
+const REWRITE = rx(String.raw`\b(?:verbessere|überarbeite|improve|rewrite)\b`)
+const CONSTRAINT_LINE = rx(String.raw`\b(?:muss|müssen|soll|sollen|nur|ohne|nicht|kein\w*|behalte|erhalte|must|should|only|without|do not|don't|never|preserve|keep|format|maximal|höchstens|mindestens|at most|at least)\b`)
+const STEP_LINE = rx(String.raw`\b(?:zuerst|dann|anschließend|danach|first|then|next|finally|schließlich)\b|^\s*\d+[.)]`)
 
 function finding<T>(value: T, evidence: Evidence[], source: 'explicit' | 'inferred' = 'inferred'): Finding<T> {
   return { value, evidence, source }
@@ -75,8 +109,9 @@ export function analyzePrompt(input: PromptInput, config: AnalyzerConfig = DEFAU
   const signatures = new Set<Category>()
 
   for (const rule of config.rules) {
-    if (rule.exclude?.test(view)) continue
-    const match = rule.pattern.exec(view)
+    const target = rule.includeNegated ? context : view
+    if (rule.exclude?.test(target)) continue
+    const match = rule.pattern.exec(target)
     if (!match) continue
     const start = match.index
     const end = match.index + match[0].length
@@ -93,23 +128,18 @@ export function analyzePrompt(input: PromptInput, config: AnalyzerConfig = DEFAU
     // On equal scores the task mentioned first is usually the main one ("Prove X … and explain why").
     .sort((a, b) => scores[b]! - scores[a]! || firstMatch[a]! - firstMatch[b]! || (a < b ? -1 : 1))
   const primaryCategory = categories[0] ?? null
-  const multiStep = /zuerst[^.!?]{0,250}(?:dann|anschließend|danach)|first[^.!?]{0,250}(?:then|next)|mehrstufig|multi.step|migration[^.!?]{0,180}(?:tests?|rollback|kompatib)|migriere[^.!?]{0,180}(?:tests?|kompatib)/iu.test(view)
-  const explicitMix = /(?:und|and)[^.!?\n]{0,20}(?:schreibe|write|analysiere|analyze|recherchiere|research|implementiere|implement)/iu.test(view)
+  const multiStep = MULTI_STEP.test(view)
+  const explicitMix = EXPLICIT_MIX.test(view)
   const ambiguity = categories.length > 1 && scores[categories[0]]! - scores[categories[1]]! < config.ambiguityMargin && !explicitMix
   const confidence = !primaryCategory ? 'unknown' : ambiguity ? 'ambiguous'
     : signatures.has(primaryCategory) || (ruleCounts[primaryCategory] ?? 0) >= 2 ? 'clear' : 'ambiguous'
   // Pure punctuation or digits is not a task; anything with words gets the general fallback route.
   const fallback = !primaryCategory && config.fallback !== null && /\p{L}{2,}/u.test(context)
 
-  const arithmetic = /^\s*(?:berechne|calculate|was ist|what is)?\s*\d+(?:[.,]\d+)?\s*[+*/−-]\s*\d+(?:[.,]\d+)?\s*[?.]?\s*$/iu.test(text)
+  const arithmetic = ARITHMETIC.test(text)
   let level: 1 | 2 | 3 | 4 | 5 = arithmetic ? 1 : 2
   const difficultyEvidence: Evidence[] = []
-  const difficultyRules = [
-    { level: 3 as const, pattern: /projekt|project|mehrstufig|multi.step|integration|mehrere|multiple/iu },
-    { level: 4 as const, pattern: /\bbeweise|\bprove|migration|migriere|migrate|architektur|architecture|nebenläufig|concurren|kompatib|compatib/iu },
-    { level: 5 as const, pattern: /(?:verteilte|distributed)[^.!?\n]{0,35}(?:system|architektur)|(?:gesamte|entire|large)[^.!?\n]{0,25}(?:codebase|monorepo|repository)|formal[^.!?\n]{0,30}(?:verifiz|verif)/iu },
-  ]
-  for (const rule of difficultyRules) {
+  for (const rule of DIFFICULTY_RULES) {
     const match = rule.pattern.exec(view)
     if (match) {
       if (rule.level > level) level = rule.level
@@ -117,16 +147,16 @@ export function analyzePrompt(input: PromptInput, config: AnalyzerConfig = DEFAU
     }
   }
   if (multiStep && level < 3) level = 3
-  const needsCurrentInformation = /aktuell|neueste|heut|latest|\bcurrent|up.to.date/iu.test(view)
+  const needsCurrentInformation = CURRENT_INFORMATION.test(view)
   // Uses the context view (negations kept, quotes hidden): a quoted "ohne Internet" is no instruction.
-  const forbidsWeb = /(?:ohne|keine?|nicht|without|no|do not|don't)\s+(?:eine?\s+|use\s+)?(?:web(?:suche|zugriff)?|recherche|browsing|internet|research)|recherchiere\s+nicht/iu.test(context)
+  const forbidsWeb = FORBIDS_WEB.test(context)
   const researchNeeded = primaryCategory === 'research' || (needsCurrentInformation && (scores.research ?? 0) >= config.categoryThreshold)
-  const fileAccessNeeded = /(?:analysiere|analyze|analyse|inspect|öffne|open|lies|read)[^.!?\n]{0,65}(?:datei|file|csv|xlsx|pdf|repository|codebase)|(?:meine|diese|angehängte|attached|this|my)\s+(?:datei|file|csv|xlsx|repository)|(?:migriere|migrate|refactor)[^.!?\n]{0,60}(?:repository|projekt|project|codebase)/iu.test(view)
-  const needsWorkspace = primaryCategory === 'coding' && /projekt|project|repository|codebase|migration|migriere|migrate/iu.test(view)
+  const fileAccessNeeded = FILE_ACCESS.test(view)
+  const needsWorkspace = primaryCategory === 'coding' && WORKSPACE.test(view)
   const reasoningDemand: Demand = !primaryCategory ? 'unknown' : arithmetic ? 'low'
     : level >= 4 && ['math', 'coding', 'reasoning', 'dataAnalysis'].includes(primaryCategory) ? 'high'
       : ['math', 'coding', 'reasoning', 'dataAnalysis'].includes(primaryCategory) || multiStep ? 'medium' : 'low'
-  const accuracyNeed: Demand = /exakt|genau|fehlerfrei|korrekt|prüfe|überprüfe|exact|accurate|verify|correct|tests?|quellen|sources/iu.test(view)
+  const accuracyNeed: Demand = ACCURACY.test(view)
     ? 'high' : primaryCategory ? 'medium' : 'unknown'
   const issues: TaskAnalysis['issues'] = []
   if (fallback) issues.push({ id: 'unclear-goal', message: 'Keine Aufgabenregel greift. Die Empfehlung nutzt das allgemeine Fallback-Profil; ein konkretes Verb (z. B. „schreibe“, „erkläre“, „berechne“) macht sie gezielter.', critical: false })
@@ -134,10 +164,10 @@ export function analyzePrompt(input: PromptInput, config: AnalyzerConfig = DEFAU
   if (ambiguity) issues.push({ id: 'ambiguous-task', message: 'Mehrere Aufgabenarten sind ähnlich stark vertreten. Benenne die Hauptaufgabe.', critical: false })
   if (fileAccessNeeded) issues.push({ id: 'missing-file', message: 'Stelle die erwähnte Datei im späteren Workflow bereit; hier werden keine Dateien gelesen.', critical: false })
   if (researchNeeded && needsCurrentInformation && forbidsWeb) issues.push({ id: 'freshness-conflict', message: 'Aktuelle Informationen und ein Verbot von Webzugriff widersprechen sich ohne bereitgestellte aktuelle Quellen.', critical: true })
-  if (/(?:ki.modell|ai model|model execution)[^.!?\n]{0,65}(?:budget|maximal|max\b|kosten|cost)|(?:nutze|verwende|use)\s+(?:ausschließlich|nur|only|exclusively)\s+(?:das\s+modell\s+)?(?:gpt|claude|gemini|llama)/iu.test(view)) {
+  if (EXECUTION_CONSTRAINT.test(view)) {
     issues.push({ id: 'unresolved-execution-constraint', message: 'Die strikte Modell- oder Budgetvorgabe lässt sich mit dem Demo-Katalog nicht verlässlich prüfen.', critical: true })
   }
-  if (primaryCategory === 'writing' && /verbessere|überarbeite|improve|rewrite/iu.test(view) && !/[\n:"„]/u.test(text)) {
+  if (primaryCategory === 'writing' && REWRITE.test(view) && !/[\n:"„]/u.test(text)) {
     issues.push({ id: 'missing-text', message: 'Füge den Text hinzu, den du verbessern möchtest.', critical: false })
   }
 
@@ -150,13 +180,13 @@ export function analyzePrompt(input: PromptInput, config: AnalyzerConfig = DEFAU
     sourceRevision: input.revision, analysisVersion: config.version,
     language: detectLanguage(view), goal: primaryCategory || fallback ? finding(goalText, goalEvidence, 'explicit') : { value: null, source: 'unknown', evidence: [] },
     primaryCategory, categories, categoryScores: scores,
-    constraints: extractLines(text, /muss|soll|nur|ohne|nicht|behalte|erhalte|must|should|only|without|do not|preserve|keep|format|maximal/iu, 'constraint-line'),
-    steps: extractLines(text, /zuerst|dann|anschließend|danach|first|then|next|^\s*\d+[.)]/iu, 'step-line'),
+    constraints: extractLines(text, CONSTRAINT_LINE, 'constraint-line'),
+    steps: extractLines(text, STEP_LINE, 'step-line'),
     complexity: primaryCategory ? finding(level, difficultyEvidence.length ? difficultyEvidence : evidence) : { value: null, source: 'unknown', evidence: [] },
     reasoningDemand,
     contextDemand: text.length > 12_000 ? 'high' : fileAccessNeeded || needsWorkspace ? 'medium' : primaryCategory ? 'low' : 'unknown',
     toolDemand: researchNeeded || fileAccessNeeded || needsWorkspace ? 'high' : primaryCategory ? 'low' : 'unknown',
-    speedNeed: /schnell|kurz|sofort|quick|fast|urgent|brief/iu.test(view) ? 'high' : primaryCategory ? 'medium' : 'unknown',
+    speedNeed: URGENCY.test(view) ? 'high' : primaryCategory ? 'medium' : 'unknown',
     accuracyNeed, multiStep: primaryCategory ? multiStep ? 'yes' : 'no' : 'unknown',
     codingTask: primaryCategory ? categories.includes('coding') ? 'yes' : 'no' : 'unknown',
     researchNeeded: primaryCategory ? researchNeeded ? 'yes' : 'no' : 'unknown',

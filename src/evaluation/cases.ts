@@ -12,7 +12,7 @@ export interface EvaluationCase {
 }
 
 /** Hand-labelled baselines. Changes require reviewing policy, models.json and case meaning. */
-export const BASELINE = { analysis: 'rules-v2', catalog: '2026-10-04', policy: 'routing-v3' }
+export const BASELINE = { analysis: 'rules-v3', catalog: '2026-10-04', policy: 'routing-v3' }
 
 // Light everyday answers: the lightest setting per allowance that clears a low bar.
 const LIGHT = ['claude-sonnet-5-5/low', 'gpt-5-6-sol-chat/instant', 'gpt-5-6-sol-chat/medium', 'gpt-6-luna/medium']

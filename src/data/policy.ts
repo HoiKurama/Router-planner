@@ -1,6 +1,6 @@
 import type { CapabilityId, Category, MetricId, PriorityMode, ProviderId, ToolId, WorkflowProfile } from '../domain/types'
 
-export const ANALYSIS_VERSION = 'rules-v2'
+export const ANALYSIS_VERSION = 'rules-v3'
 export const POLICY_VERSION = 'routing-v3'
 export const MAX_PROMPT_CODEPOINTS = 20_000
 /** Below this rule confidence (0–1) a recommendation is only provisional. */
