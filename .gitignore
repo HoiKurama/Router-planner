@@ -3,3 +3,10 @@ dist/
 coverage/
 .vitest/
 *.local
+# local only, never on GitHub
+_archiv/
+input/
+output/
+# Windows
+desktop.ini
+Thumbs.db
